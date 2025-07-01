@@ -30,4 +30,6 @@ Thumbs.db
 *.bak
 *.tmp
 
+# Environment files
 .env
+.env.local
