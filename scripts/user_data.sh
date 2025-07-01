@@ -16,7 +16,7 @@ cd techeazy-devops
 mvn clean package
 
 # 8. Run the app on port 80 (needs root)
-sudo nohup java -jar target/techeazy-devops-0.0.1-SNAPSHOT.jar
+sudo nohup java -jar target/techeazy-devops-0.0.1-SNAPSHOT.jar > app.log 2>&1 &
 
 # Auto shutdown instance after 1 hour
 sudo shutdown -h +60

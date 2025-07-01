@@ -20,8 +20,15 @@ resource "aws_security_group" "allow_http" {
   ingress {
     from_port   = 80
     to_port     = 80
-    protocol    = "tcp"
+    protocol    = "-1"
     cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  ingress {
+    from_port   = 22
+    to_port     = 22
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]  # Replace with your IP address
   }
 
   egress {
@@ -33,7 +40,7 @@ resource "aws_security_group" "allow_http" {
 }
 
 resource "aws_instance" "devops_instance" {
-  ami                    = "ami-0e670eb768a5fc3d4"  # Ubuntu 22.04 (free tier) in ap-south-1
+  ami                    = "ami-0f918f7e67a3323f0"  # Ubuntu 22.04 (free tier) in ap-south-1
   instance_type          = "t2.micro"
 #  key_name               = file("C:/Users/SUJAL/Downloads/example.pem")
   vpc_security_group_ids = [aws_security_group.allow_http.id]
