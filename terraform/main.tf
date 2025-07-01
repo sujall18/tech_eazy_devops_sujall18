@@ -9,8 +9,8 @@ terraform {
 
 provider "aws" {
   region     = var.aws_region
-  access_key = var.aws_access_key
-  secret_key = var.aws_secret_key
+#  access_key = var.aws_access_key
+#  secret_key = var.aws_secret_key
 }
 
 resource "aws_security_group" "allow_http" {
@@ -20,7 +20,7 @@ resource "aws_security_group" "allow_http" {
   ingress {
     from_port   = 80
     to_port     = 80
-    protocol    = "-1"
+    protocol    = "tcp"
     cidr_blocks = ["0.0.0.0/0"]
   }
 
