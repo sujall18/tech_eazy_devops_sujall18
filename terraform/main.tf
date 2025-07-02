@@ -40,11 +40,17 @@ resource "aws_security_group" "allow_http" {
 }
 
 resource "aws_instance" "devops_instance" {
-  ami                    = "ami-0f918f7e67a3323f0"  # Ubuntu 22.04 (free tier) in ap-south-1
-  instance_type          = "t2.micro"
+  ami                    = var.ami_id  # Ubuntu 22.04 (free tier) in ap-south-1
+  instance_type          = var.instance_type
 #  key_name               = file("C:/Users/SUJAL/Downloads/example.pem")
   vpc_security_group_ids = [aws_security_group.allow_http.id]
-  user_data              = base64encode(file("../scripts/user_data.sh"))
+  
+  iam_instance_profile   = aws_iam_instance_profile.s3_upload_only_profile.name
+  associate_public_ip_address = true
+
+  user_data              = base64encode(templatefile("../scripts/user_data.sh", {
+    S3_BUCKET_NAME = var.bucket_name
+  }))
 
   tags = {
     Name = "DevOps-${var.stage}-Instance"
