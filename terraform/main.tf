@@ -44,7 +44,7 @@ resource "aws_instance" "devops_instance" {
   instance_type          = "t2.micro"
 #  key_name               = file("C:/Users/SUJAL/Downloads/example.pem")
   vpc_security_group_ids = [aws_security_group.allow_http.id]
-  user_data              = file("../scripts/user_data.sh")
+  user_data              = base64encode(file("../scripts/user_data.sh"))
 
   tags = {
     Name = "DevOps-${var.stage}-Instance"
