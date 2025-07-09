@@ -34,7 +34,7 @@ resource "aws_instance" "app_server" {
 
   associate_public_ip_address = true
 
-  user_data = templatefile("${path.module}./scripts/user_data.sh.tftpl", {
+  user_data = templatefile("${path.module}./scripts/user_data.sh.", {
     log_s3_bucket_name=var.log_s3_bucket_name
     REPO_URL = var.github_repo_url
     shutdown_after_minutes = var.shutdown_after_minutes
