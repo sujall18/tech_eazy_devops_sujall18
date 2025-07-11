@@ -1,0 +1,96 @@
+name: Assignment-3 Automate java app deployment .
+
+on:
+  push:
+    branches:
+      - assignment3
+    tags:
+      - deploy-*
+  workflow_dispatch:
+    inputs:
+      stage:
+        description: 'Deployment stage (dev/prod)'
+        required: true
+        default: 'dev'
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    env:
+      AWS_REGION: ap-south-1
+      TF_VAR_logs_bucket_name: techeazy-dev-logs-sujal
+      TF_VAR_project_name: techeazy-devops
+      TF_VAR_environment: ${{ github.event.inputs.stage || 'dev' }}
+      STAGE: ${{ github.event.inputs.stage || 'dev' }}
+      AWS_ACCESS_KEY_ID: example-access-key-id
+      AWS_SECRET_ACCESS_KEY: example-secret-access-key
+
+    steps:
+      - name:  Checkout Code
+        uses: actions/checkout@v3
+
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v2
+        with:
+          aws-access-key-id: ${{ env.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ env.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name:  Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+
+      - name: Terraform Init
+        run: |
+         cd ec2-deployement 
+         terraform init
+
+      - name:  Terraform Plan
+        run: |
+         cd ec2-deployement 
+         terraform plan -var-file="${{env.STAGE}}.tfvars"
+
+      - name:  Terraform Apply
+        run: |
+         cd ec2-deployement
+         terraform apply -auto-approve -var-file="${{env.STAGE}}.tfvars"
+
+      - name: Get EC2 Public IP
+        run: |
+         cd ec2-deployement
+         echo "INSTANCE_IP=$(terraform output -raw app_ec2_public_ip)" >> $GITHUB_ENV
+         echo "EC2 Public IP: $INSTANCE_IP"
+
+      -  name: Set S3 Bucket name
+         run: |
+          cd ec2-deployement
+          echo "TF_VAR_logs_bucket_name=$(terraform output -raw s3_log_bucket)" >> $GITHUB_ENV
+
+      - name:  Wait for EC2 to upload app.txt to S3
+        run: |
+          echo "Waiting for EC2 to signal app readiness via app.txt in S3..."
+          for i in {1..10}; do
+            if aws s3 ls s3://${{ env.TF_VAR_logs_bucket_name }}/status/app.txt >/dev/null 2>&1; then
+              echo " Signal received: app.txt found in S3 on attempt $i"
+              break
+            else
+              echo " Attempt $i: app.txt not found... sleeping 5s"
+              sleep 5
+            fi
+          done
+
+      - name: Validate App on Port 80
+        run: |
+          echo "Validating app at http://${INSTANCE_IP} ..."
+          for i in {1..10}; do
+            STATUS=$(curl -o /dev/null -s -w "%{http_code}" http://${INSTANCE_IP})
+            if [[ "$STATUS" == "200" ]]; then
+              echo "App is healthy and returned HTTP 200 on attempt $i"
+              exit 0
+            else
+              echo " Attempt $i: App not ready yet, got HTTP $STATUS"
+              sleep 5
+            fi
+          done
+          echo " App failed health check after 40 attempts (~10 mins)"
+          exit 1
