@@ -14,8 +14,7 @@ This project automates the deployment of an EC2 instance on AWS using Terraform.
 - Supports different environments via `stage` variable
 - Stops EC2 instance after usage 
 
----
-
+------
 ## 🧾 Files Included
 
 | File                | Purpose                               |
