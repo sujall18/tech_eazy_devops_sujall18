@@ -41,7 +41,7 @@ jobs:
 
       - name: Terraform Init
         run: |
-         cd ec2-deployement 
+         cd terraform 
          terraform init
 
       - name:  Terraform Plan
