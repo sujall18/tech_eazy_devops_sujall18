@@ -4,7 +4,7 @@ This project automates the deployment of an EC2 instance on AWS using Terraform.
 
 ----
 
-## 🚀 Features    
+## 🚀 Features         
 
 - Launches Ubuntu EC2 instance in `ap-south-1`
 - Installs Java 21, Maven
