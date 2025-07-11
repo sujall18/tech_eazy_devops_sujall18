@@ -2,7 +2,7 @@
 
 This project automates the deployment of an EC2 instance on AWS using Terraform. The instance installs Java 21, clones a GitHub repo, and deploys a web application.
 
----
+----
 
 ## 🚀 Features
 
