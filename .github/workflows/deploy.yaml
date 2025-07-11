@@ -46,23 +46,23 @@ jobs:
 
       - name:  Terraform Plan
         run: |
-         cd ec2-deployement 
+         cd terraform 
          terraform plan -var-file="${{env.STAGE}}.tfvars"
 
       - name:  Terraform Apply
         run: |
-         cd ec2-deployement
+         cd terraform
          terraform apply -auto-approve -var-file="${{env.STAGE}}.tfvars"
 
       - name: Get EC2 Public IP
         run: |
-         cd ec2-deployement
+         cd terraform
          echo "INSTANCE_IP=$(terraform output -raw app_ec2_public_ip)" >> $GITHUB_ENV
          echo "EC2 Public IP: $INSTANCE_IP"
 
       -  name: Set S3 Bucket name
          run: |
-          cd ec2-deployement
+          cd terraform
           echo "TF_VAR_logs_bucket_name=$(terraform output -raw s3_log_bucket)" >> $GITHUB_ENV
 
       - name:  Wait for EC2 to upload app.txt to S3
