@@ -58,6 +58,7 @@ jobs:
         run: |
          cd terraform
          echo "INSTANCE_IP=$(terraform output -raw app_ec2_public_ip)" >> $GITHUB_ENV
+         sleep 30
          echo "EC2 Public IP: $INSTANCE_IP"
 
       -  name: Set S3 Bucket name
@@ -68,7 +69,7 @@ jobs:
       - name:  Wait for EC2 to upload app.txt to S3
         run: |
           echo "Waiting for EC2 to signal app readiness via app.txt in S3..."
-          for i in {1..10}; do
+          for i in {1..30}; do
             if aws s3 ls s3://${{ env.TF_VAR_logs_bucket_name }}/status/app.txt >/dev/null 2>&1; then
               echo " Signal received: app.txt found in S3 on attempt $i"
               break
@@ -81,7 +82,7 @@ jobs:
       - name: Validate App on Port 80
         run: |
           echo "Validating app at http://${INSTANCE_IP} ..."
-          for i in {1..10}; do
+          for i in {1..30}; do
             STATUS=$(curl -o /dev/null -s -w "%{http_code}" http://${INSTANCE_IP})
             if [[ "$STATUS" == "200" ]]; then
               echo "App is healthy and returned HTTP 200 on attempt $i"
@@ -93,3 +94,4 @@ jobs:
           done
           echo " App failed health check after 40 attempts (~10 mins)"
           exit 1
+          
