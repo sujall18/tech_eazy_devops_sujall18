@@ -1,21 +1,10 @@
-terraform {
-  required_providers {
-    aws = {
-      source  = "hashicorp/aws"
-      version = "~> 5.0"
-    }
-  }
-}
-
 provider "aws" {
-  region     = var.aws_region
-#  access_key = var.aws_access_key
-#  secret_key = var.aws_secret_key
+  region = var.aws_region
 }
 
-resource "aws_security_group" "allow_http" {
-  name        = "allow_http_${var.stage}"
-  description = "Allow HTTP traffic on port 80"
+resource "aws_security_group" "allow_http_and_ssh" {
+  name        = "allow_http_and_ssh"
+  description = "Allow HTTP traffic and SSH traffic on port 80 and 22"
 
   ingress {
     from_port   = 80
@@ -23,14 +12,12 @@ resource "aws_security_group" "allow_http" {
     protocol    = "tcp"
     cidr_blocks = ["0.0.0.0/0"]
   }
-
   ingress {
     from_port   = 22
     to_port     = 22
     protocol    = "tcp"
-    cidr_blocks = ["0.0.0.0/0"]  # Replace with your IP address
+    cidr_blocks = ["0.0.0.0/0"]
   }
-
   egress {
     from_port   = 0
     to_port     = 0
@@ -39,14 +26,22 @@ resource "aws_security_group" "allow_http" {
   }
 }
 
-resource "aws_instance" "devops_instance" {
-  ami                    = "ami-0f918f7e67a3323f0"  # Ubuntu 22.04 (free tier) in ap-south-1
-  instance_type          = "t2.micro"
-#  key_name               = file("C:/Users/SUJAL/Downloads/example.pem")
-  vpc_security_group_ids = [aws_security_group.allow_http.id]
-  user_data              = base64encode(file("../scripts/user_data.sh"))
+resource "aws_instance" "app_server" {
+  ami                    = var.ami_id
+  instance_type          = var.instance_type
+  security_groups        = [aws_security_group.allow_http_and_ssh.name]
+  iam_instance_profile = aws_iam_instance_profile.ec2_instance_profile_b.name
+
+  associate_public_ip_address = true
+
+  user_data = templatefile("${path.module}./scripts/user_data.sh.tftpl", {
+    log_s3_bucket_name=var.log_s3_bucket_name
+    REPO_URL = var.github_repo_url
+    shutdown_after_minutes = var.shutdown_after_minutes
+  })
 
   tags = {
-    Name = "DevOps-${var.stage}-Instance"
+    Name  = "AppServer-${var.stage}"
+    Stage = var.stage
   }
 }
